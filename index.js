@@ -6,77 +6,110 @@
 // new party that they want to schedule. After filling out the form and submitting it, 
 // the user observes their party added to the list of parties.
 
+document.addEventListener('DOMContentLoaded', () => {
 const COHORT = "2401-FTB-MT-WEB-PT";
-const APIURL = `https://fsa-crud-2aa9294fe819.herokuapp.com/api/${COHORT}/events`;
+const API_URL = `https://fsa-crud-2aa9294fe819.herokuapp.com/api/${COHORT}/events`;
 
 // state
 const state = {
-  events: [],
+  parties: [],
 };
 
 // query selector elements
-const eventList = document.querySelector("#addEvent");
-eventList.addEventListener("submit", addEvent);
+const partyList = document.querySelector('#party-list');
+const partyForm = document.querySelector('#party-form');
 
 // sync state with API and rerender
-async function getEvents() {
+async function fetchParties() {
   try {
-    const response = await fetch(APIURL);
+    const response = await fetch(API_URL);
     const json = await response.json();
-    state.events = json.data;
+    state.parties = json.data;
+
+
   } catch (error) {
     console.error(error);
   }
 }
-function renderEvents() {
-  if (!state.events.length) {
-    eventList.innerHTML = "<li>No events.</li>";
-    return;
+function renderParties(party) {
+    partyList.innerHTML = "<li>No events.</li>";
+    
+    state.parties.forEach(party => {
+        renderParty(party);
+    })
   }
+
+  async function addParty(partyData) {
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(partyData),
+        });
+
+        if (response.ok) {
+            const newParty = await response.json();
+            state.parties.push(newParty);
+            renderParties();
+            partyForm.reset();
+        } else {
+            console.error('Failed to add party:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error adding party:', error);
+    }
 }
 
-const eventCards = state.events.map((event) => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <h2>${event.name}</h2>
-      <h3>${event.date}</h3>
-      <h3>${event.time}</h3>
-      <h3>${event.location}</h3>
-      <p>${event.description}</p>
+  async function deleteParty(partyId) {
+    try {
+        const response = await fetch(`${API_URL}/${partyId}`, {
+            method: 'DELETE',
+        });
+
+        if (response.ok) {
+            state.parties = state.parties.filter(party => party.id !== partyId);
+            renderParties();
+        } else {
+            console.error('Failed to delete party:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error deleting party:', error);
+    }
+}
+
+
+function renderParty(party) {
+    const partyItem = document.createElement('div');
+    partyItem.classList.add('party-item');
+    partyItem.innerHTML =  `
+    <h3>${party.name}</h3>
+    <p><strong>Date:</strong> ${party.date}</p>
+    <p><strong>Time:</strong> ${party.time}</p>
+    <p><strong>Location:</strong> ${party.location}</p>
+    <p><strong>Description:</strong> ${party.description}</p>
+    <button class="delete-btn" data-id="${party.id}">Delete</button>
       
     `;
-    return li;
-  });
 
-  eventList.replaceChildren(...eventCards);
-
-  //   update state with events from API
-
-  async function addEvent(event) {
-    event.preventDefault();
-
-    try {
-      const response = await fetch(APIURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: addEventForm.name.value,
-          date: addEventForm.date.value,
-          time: addEventForm.time.value,
-          location: addEventForm.location.value,
-          description: addEventForm.description.value,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create event");
-      }
-
-      render();
-    } catch (error) {
-      console.error(error);
+  partyList.appendChild(partyItem);
     }
-  }
 
+    partyForm.addEventListener('submit', (e) => {
+        e.preventDefault();
 
+        const formData = new FormData(partyForm);
+        const partyData = Object.fromEntries(formData.entries());
+        addParty(partyData);
+    });
 
+    partyList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const partyId = e.target.getAttribute('data-id');
+            deleteParty(partyId);
+        }
+    });
+
+    fetchParties();
+});
