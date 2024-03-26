@@ -8,33 +8,33 @@
 <body>
     <h1>Party Planner</h1>
 
-    <p id="party-list">
+    <ul id="party-list">
         <!-- Parties added here dynamically -->
-    </p>
+    </ul>
     <form id="party-form">
-        <script src="./index.js"></script>
         <label>
-            Name
+            Name:
             <input type="text" name="name" />
-        </label>
+        </label><br>
         <label>
-            Date
-            <input type="text" name="date" />
-        </label>
-        <label>
+            Date:
+            <input type="datetime-local" name="date" />
+        </label><br>
+        <!-- <label>
             Time
             <input type="text" name="time" />
-        </label>
+        </label> -->
         <label>
-            Location
+            Location:
             <input type="text" name="location" />
-        </label>
+        </label><br>
         <label>
-            Description
+            Description:
             <input type="text" name="description" />
-        </label>
-        <button>Add Event</button>
+        </label><br>
+        <button>Add Party</button>
     </form>
     <ul id="events"></ul>
+    <script src="./index.js"></script>
 </body>
 </html>

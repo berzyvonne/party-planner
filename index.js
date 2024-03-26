@@ -16,8 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // query selector elements
-  const partyList = document.querySelector("#party-list");
-  const partyForm = document.querySelector("#party-form");
+  const partyList = document.getElementById("party-list");
+  const partyForm = document.getElementById("party-form");
 
   // sync state with API and rerender
   async function fetchParties() {
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error(error);
     }
   }
-  function renderParties(party) {
+  function renderParties() {
     partyList.innerHTML = "";
     if (state.parties.length === 0) {
       partyList.innerHTML = "<li>No events.</li>";
@@ -42,17 +42,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function addParty(partyData) {
     try {
+        const newDate = new Date(partyData.date)
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(partyData),
+        body: JSON.stringify({
+            ...partyData, 
+            date: newDate.toISOString()
+        }),
+
+        
       });
 
       if (response.ok) {
         const newParty = await response.json();
-        state.parties.push(newParty);
+        state.parties.push(newParty.data);
+        console.log(newParty)
         renderParties();
         partyForm.reset();
       } else {
@@ -65,12 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function deleteParty(partyId) {
     try {
+        console.log(partyId)
       const response = await fetch(`${API_URL}/${partyId}`, {
         method: "DELETE",
       });
-
+    //   console.log(typeof partyId, typeof state.parties[0].id)
       if (response.ok) {
-        state.parties = state.parties.filter((party) => party.id !== partyId);
+        state.parties = state.parties.filter((party) => party.id !== Number(partyId));
         renderParties();
       } else {
         console.error("Failed to delete party:", response.statusText);
@@ -85,10 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
     partyItem.classList.add("party-item");
     partyItem.innerHTML = `
     <h3>${party.name}</h3>
-    <p><strong>Date:</strong> ${party.date}</p>
-    <p><strong>Time:</strong> ${party.time}</p>
-    <p><strong>Location:</strong> ${party.location}</p>
-    <p><strong>Description:</strong> ${party.description}</p>
+    <li><strong>Date:</strong> ${party.date}</li>
+    <li><strong>Location:</strong> ${party.location}</li>
+    <li><strong>Description:</strong> ${party.description}</li>
     <button class="delete-btn" data-id="${party.id}">Delete</button>
       
     `;
@@ -101,12 +108,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const formData = new FormData(partyForm);
     const partyData = Object.fromEntries(formData.entries());
+    console.log(partyData)
     addParty(partyData);
   });
 
   partyList.addEventListener("click", (e) => {
     if (e.target.classList.contains("delete-btn")) {
       const partyId = e.target.getAttribute("data-id");
+      console.log(partyId)
       deleteParty(partyId);
     }
   });
